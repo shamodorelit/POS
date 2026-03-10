@@ -444,9 +444,9 @@ function updateBillUI() {
             </div>
             <div class="bill-item-actions">
                 <div class="qty-control">
-                    <button class="qty-btn" onclick="updateBillQuantity(${item.id}, -1)">-</button>
+                    <button class="qty-btn" onclick="updateBillQuantity('${item.id}', -1)">-</button>
                     <span>${item.quantity}</span>
-                    <button class="qty-btn" onclick="updateBillQuantity(${item.id}, 1)">+</button>
+                    <button class="qty-btn" onclick="updateBillQuantity('${item.id}', 1)">+</button>
                 </div>
                 <div class="item-total">${formatCurrency(amount)}</div>
             </div>

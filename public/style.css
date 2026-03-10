@@ -212,17 +212,26 @@ body {
 .stat-icon.income { background-color: var(--success-light); color: var(--success); }
 .stat-icon.danger { background-color: var(--danger-light); color: var(--danger); }
 
+.stat-details {
+    flex: 1;
+    min-width: 0;
+}
+
 .stat-details h3 {
     font-size: 14px;
     color: var(--text-muted);
     font-weight: 500;
     margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .stat-value {
-    font-size: 24px;
+    font-size: 20px;
     font-weight: 700;
     color: var(--text-main);
+    word-break: break-word;
 }
 
 /* Tables & Cards */
