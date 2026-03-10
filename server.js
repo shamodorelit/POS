@@ -79,7 +79,7 @@ const authMiddleware = async (req, res, next) => {
 };
 
 app.use('/api', (req, res, next) => {
-    if (req.path.startsWith('/auth')) return next();
+    if (req.path.startsWith('/auth') || req.path.startsWith('/public')) return next();
     return authMiddleware(req, res, next);
 });
 
@@ -140,7 +140,8 @@ app.get('/api/products', async (req, res) => {
             id: p._id.toString(),
             name: p.name,
             quantity: p.quantity,
-            price: p.price
+            price: p.price,
+            image: p.image
         }));
         
         res.json(mappedProducts);
@@ -150,7 +151,7 @@ app.get('/api/products', async (req, res) => {
 });
 
 app.post('/api/products', async (req, res) => {
-    const { name, quantity, price } = req.body;
+    const { name, quantity, price, image } = req.body;
     if (!name || quantity === undefined || price === undefined) {
         return res.status(400).json({ error: 'Missing required fields' });
     }
@@ -160,20 +161,21 @@ app.post('/api/products', async (req, res) => {
             user_id: req.user._id,
             name,
             quantity,
-            price
+            price,
+            image
         });
-        res.status(201).json({ id: product._id.toString(), name, quantity, price });
+        res.status(201).json({ id: product._id.toString(), name, quantity, price, image });
     } catch (err) {
         return res.status(500).json({ error: err.message });
     }
 });
 
 app.put('/api/products/:id', async (req, res) => {
-    const { name, quantity, price } = req.body;
+    const { name, quantity, price, image } = req.body;
     try {
         const product = await Product.findOneAndUpdate(
             { _id: req.params.id, user_id: req.user._id },
-            { name, quantity, price },
+            { name, quantity, price, image },
             { new: true }
         );
         if (!product) return res.status(404).json({ error: 'Product not found' });
@@ -336,6 +338,47 @@ app.get('/api/reports/product-sales', async (req, res) => {
     } catch (err) {
         return res.status(500).json({ error: err.message });
     }
+});
+
+// ==== MARKETPLACE API ====
+
+app.post('/api/marketplace/enable', async (req, res) => {
+    try {
+        await User.findByIdAndUpdate(req.user._id, { marketplace_enabled: true });
+        res.json({ message: 'Marketplace enabled successfully' });
+    } catch (err) {
+        return res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/public/store/:business_name', async (req, res) => {
+    try {
+        const user = await User.findOne({ business_name: req.params.business_name });
+        if (!user || user.marketplace_enabled !== true) {
+            return res.status(404).json({ error: 'Store not found or marketplace is disabled' });
+        }
+        
+        // Return products that have stock
+        const products = await Product.find({ user_id: user._id, quantity: { $gt: 0 } }).sort({ name: 1 });
+        const mappedProducts = products.map(p => ({
+            id: p._id.toString(),
+            name: p.name,
+            price: p.price,
+            image: p.image
+        }));
+        
+        res.json({
+            business_name: user.business_name,
+            products: mappedProducts
+        });
+    } catch (err) {
+        return res.status(500).json({ error: err.message });
+    }
+});
+
+// Serves the public marketplace UI
+app.get('/:business_name', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'marketplace.html'));
 });
 
 // Export app for Vercel, listen for local development

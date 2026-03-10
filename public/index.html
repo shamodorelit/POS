@@ -106,6 +106,7 @@
                 <h1 id="page-title">Dashboard</h1>
             </div>
             <div class="header-right">
+                <button class="btn btn-outline" id="btn-create-marketplace" style="margin-right:12px;"><i class='bx bx-globe'></i> MarketPlace</button>
                 <div class="time-display" id="clock">00:00 AM</div>
                 <div class="user-profile">
                     <span id="business-name-display" style="font-weight:600;margin-right:12px;">Admin</span>
@@ -329,6 +330,12 @@
             <div class="modal-body">
                 <form id="product-form">
                     <input type="hidden" id="product-id">
+                    <div class="form-group" style="text-align:center;">
+                        <input type="file" id="product-image" accept="image/*" style="display:none;">
+                        <div id="product-image-preview" onclick="document.getElementById('product-image').click()" style="width:120px; height:120px; border:2px dashed var(--border); border-radius:12px; margin:0 auto 10px; display:flex; align-items:center; justify-content:center; cursor:pointer; overflow:hidden; background:var(--secondary);">
+                            <span style="color:var(--text-muted);font-size:12px;">+ Add Image</span>
+                        </div>
+                    </div>
                     <div class="form-group">
                         <label>Item Name</label>
                         <input type="text" id="product-name" class="form-control" required>

@@ -29,14 +29,16 @@ const connectDB = async () => {
 const UserSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    business_name: { type: String, required: true }
+    business_name: { type: String, required: true },
+    marketplace_enabled: { type: Boolean, default: false }
 });
 
 const ProductSchema = new mongoose.Schema({
     user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     name: { type: String, required: true },
     quantity: { type: Number, default: 0 },
-    price: { type: Number, default: 0.0 }
+    price: { type: Number, default: 0.0 },
+    image: { type: String }
 });
 
 const InvoiceItemSchema = new mongoose.Schema({

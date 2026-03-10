@@ -105,6 +105,7 @@ let products = [];
 let currentBill = [];
 let currentTab = 'dashboard-view';
 let chartInstance = null;
+let currentProductImageBase64 = null;
 
 // ==== DOM ELEMENTS ====
 const clockEl = document.getElementById('clock');
@@ -152,6 +153,26 @@ function setupNavigation() {
             if(target === 'reports-view') loadReports();
         });
     });
+    
+    // ==== MARKETPLACE ====
+    const btnMarketplace = document.getElementById('btn-create-marketplace');
+    if (btnMarketplace) {
+        btnMarketplace.addEventListener('click', async () => {
+            try {
+                const res = await fetchAuth(`${API_BASE}/marketplace/enable`, { method: 'POST' });
+                if (res.ok) {
+                    const domain = window.location.origin;
+                    const url = `${domain}/${encodeURIComponent(currentBusiness)}`;
+                    alert(`Marketplace Enabled!\nYour public store is available at:\n${url}`);
+                } else {
+                    alert('Failed to enable marketplace');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Error enabling marketplace');
+            }
+        });
+    }
 }
 
 function setupModals() {
@@ -162,8 +183,51 @@ function setupModals() {
     document.getElementById('btn-add-product').addEventListener('click', () => {
         document.getElementById('product-form').reset();
         document.getElementById('product-id').value = '';
+        currentProductImageBase64 = null;
+        document.getElementById('product-image-preview').innerHTML = '<span style="color:var(--text-muted);font-size:12px;">+ Add Image</span>';
         document.getElementById('product-modal-title').textContent = 'Add Product';
         showModal(productModal);
+    });
+
+    // Handle Image Selection
+    document.getElementById('product-image').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                const MAX_WIDTH = 400;
+                const MAX_HEIGHT = 400;
+                let width = img.width;
+                let height = img.height;
+
+                if (width > height) {
+                    if (width > MAX_WIDTH) {
+                        height *= MAX_WIDTH / width;
+                        width = MAX_WIDTH;
+                    }
+                } else {
+                    if (height > MAX_HEIGHT) {
+                        width *= MAX_HEIGHT / height;
+                        height = MAX_HEIGHT;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                currentProductImageBase64 = dataUrl;
+                document.getElementById('product-image-preview').innerHTML = `<img src="${dataUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;">`;
+            }
+            img.src = event.target.result;
+        }
+        reader.readAsDataURL(file);
     });
 
     // Handle Product Form
@@ -174,7 +238,12 @@ function setupModals() {
         const qty = document.getElementById('product-qty').value;
         const price = document.getElementById('product-price').value;
         
-        const payload = { name, quantity: parseInt(qty), price: parseFloat(price) };
+        const payload = { 
+            name, 
+            quantity: parseInt(qty), 
+            price: parseFloat(price),
+            image: currentProductImageBase64
+        };
         const method = id ? 'PUT' : 'POST';
         const url = id ? `${API_BASE}/products/${id}` : `${API_BASE}/products`;
         
@@ -289,9 +358,10 @@ async function loadInventory() {
         tbody.innerHTML = '';
         
         products.forEach(p => {
+            const imgHtml = p.image ? `<img src="${p.image}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;">` : `<div style="width:40px;height:40px;border-radius:8px;background:#e2e8f0;display:flex;align-items:center;justify-content:center;font-size:10px;color:#64748b;">No Img</div>`;
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td>${p.name}</td>
+                <td style="display:flex;align-items:center;gap:12px;">${imgHtml} <span>${p.name}</span></td>
                 <td class="${p.quantity <= 10 ? 'text-danger' : ''}">${p.quantity}</td>
                 <td>${formatCurrency(p.price)}</td>
                 <td>
@@ -328,6 +398,14 @@ function editProduct(id) {
         document.getElementById('product-name').value = p.name;
         document.getElementById('product-qty').value = p.quantity;
         document.getElementById('product-price').value = p.price;
+        
+        currentProductImageBase64 = p.image || null;
+        if (p.image) {
+            document.getElementById('product-image-preview').innerHTML = `<img src="${p.image}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;">`;
+        } else {
+            document.getElementById('product-image-preview').innerHTML = '<span style="color:var(--text-muted);font-size:12px;">+ Add Image</span>';
+        }
+        
         document.getElementById('product-modal-title').textContent = 'Edit Product';
         showModal(productModal);
     }
@@ -370,7 +448,9 @@ function renderPOSProducts(productArray) {
     productArray.forEach(p => {
         const div = document.createElement('div');
         div.className = 'pos-product-card';
+        const imgStyle = p.image ? `background-image:url('${p.image}');background-size:cover;background-position:center;` : `background:#e2e8f0;`;
         div.innerHTML = `
+            <div style="width:100%;height:100px;border-radius:8px;margin-bottom:12px;${imgStyle}"></div>
             <h4>${p.name}</h4>
             <div class="price">${formatCurrency(p.price)}</div>
             <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Stock: ${p.quantity}</div>
