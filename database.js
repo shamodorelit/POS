@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const { encrypt, decrypt } = require('./utils/encryption');
 
 // Global variable to cache the mongoose connection
