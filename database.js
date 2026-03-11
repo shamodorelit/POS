@@ -71,7 +71,7 @@ const initializeDatabase = async () => {
         if (!adminExists) {
             await User.create({
                 email: 'Admin',
-                password: 'Abc@12345',
+                password: 'Abc@12345678',
                 business_name: 'Admin Portal',
                 role: 'admin'
             });
